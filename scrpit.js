@@ -3,19 +3,14 @@ const canvas = document.getElementById('joguinhoClass')
 //inicializar o canvas
 const ctx = canvas.getContext('2d')
 
-document.addEventListener('keypress', (e) => {
-    if(e.code == 'Space' && personagem.pulando==false) {
-        personagem.velocidadey = 21
-        personagem.pulando = true
-    }
-})
+
 
 class Entidade {
 
     #gravidade
     constructor(x, y, w, h, img, gravidade) {
         this.x = x;
-        this.y = y - h;
+        this.y = y;
         this.w = w;
         this.h = h;
         this.img = img;
@@ -41,11 +36,11 @@ class Entidade {
         this.h,
         )
     }
-    desenhar(cor){
+    desenhar(cor, height){
         ctx.fillStyle = cor
         ctx.fillRect(
         this.x,
-        this.y,
+        this.y - height,
         this.w,
         this.h,
         )
@@ -54,28 +49,89 @@ class Entidade {
 
 }
 
-class personagem extends Entidade {
-
-    constructor(x, y, w, h, img, gravidade, speedY) {
+class Personagem extends Entidade {
+    #speedY
+    #pulando
+    constructor(x, y, w, h, img, gravidade) {
         super(x, y, w, h, img, gravidade);
-        this.speedY = speedY;
+        this.#speedY = 21;
+        this.#pulando = false;
+
+    }
+    get speedY() {
+        return this.#speedY;
+    }
+    set speedY(speedY) {
+        this.#speedY = speedY;
+    }
+    get pulando() {
+        return this.#pulando;
+    }
+    set pulando(pulando) {
+        this.#pulando = pulando;
+    }
+
+    saltar(){
+        this.y -= this.speedY
+        this.speedY -= this.gravidade
+        if(this.y >= 430){
+            this.pulando = false
+            this.y = 430
+        }
     }
 
     
 
 }
-class obstaculo extends Entidade {
+class Obstaculo extends Entidade {
+
     constructor(x, y, w, h, img, gravidade, speedX) {
         super(x, y, w, h, img, gravidade);
         this.speedX = speedX;
     }
-}
-const mainC = new personagem(0, 480, 50, 50, "", 1, 0)
-function loop () {
-    ctx.clearRect(0,0,canvas.width,canvas.height)
-    mainC.desenhar('red')
-  
 
+    move(){
+        this.x -= this.speedX
+        if(this.x <= -this.w){
+            this.x = canvas.width
+            let newHeight = (Math.random()) * 100
+            this.h = newHeight
+        }
+    
+    }
+}
+const mainC = new Personagem(60, 480, 50, 50, "", 1, 0)
+const Hit1 = new Obstaculo(720, 480, 50, 100, "", 0, 15)
+document.addEventListener('keypress', (e) => {
+    if(e.code == 'Space' && mainC.pulando==false) {
+        
+        mainC.pulando = true
+        mainC.speedY = 21
+    }
+})
+function colisao() {
+if (
+    mainC.x + mainC.w >  canvas.width - Hit1.x && 
+    mainC.x < canvas.width - Hit1.x + Hit1.w &&
+    mainC.y + mainC.h >canvas.height - Hit1.h){
+    return true;}
+    else {
+return false; 
+    }}
+function loop () {
+
+    ctx.clearRect(0,0,canvas.width,canvas.height)
+    mainC.desenhar('red', 0)
+    Hit1.desenhar('green', Hit1.h)
+    mainC.saltar()
+    Hit1.move()
+    if (colisao() == true){
+        alert('colidiu')
+        mainC.y = 430
+        Hit1.x = canvas.width
+        Hit1.h = 100
+        
+    }
      
     
     requestAnimationFrame(loop)
